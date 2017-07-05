@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+VERSION=$(cat VERSION)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REVISION=$(git rev-parse HEAD)
+BUILDUSER=$(git --no-pager show -s --format='%ae')
+BUILDDATE=$(date '+%Y%m%d-%H:%M:%S')
+DIR="github.com/prometheus/common/version"
+
+go get
+
+go build --ldflags "-extldflags '-static' -X ${DIR}.Version=${VERSION} -X ${DIR}.Branch=${BRANCH} -X ${DIR}.Revision=${REVISION} -X ${DIR}.BuildUser=${BUILDUSER} -X ${DIR}.BuildDate=${BUILDDATE}"
+
+gofmt -w rooomy_exporter.go
+
+strip rooomy-exporter

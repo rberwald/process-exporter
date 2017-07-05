@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+rm -f process_exporter 2>/dev/null || true
+VERSION=$(cat VERSION)
+
+docker run --rm -v "$PWD":/go/src/$(basename "$PWD") -w /go/src/$(basename "$PWD") golang bash gobuild
+
+docker build -t rberwald/process-exporter:${VERSION} -t rberwald/process-exporter:${latest} .
