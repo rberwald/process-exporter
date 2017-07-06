@@ -13,6 +13,6 @@ go get
 
 go build --ldflags "-extldflags '-static' -X ${DIR}.Version=${VERSION} -X ${DIR}.Branch=${BRANCH} -X ${DIR}.Revision=${REVISION} -X ${DIR}.BuildUser=${BUILDUSER} -X ${DIR}.BuildDate=${BUILDDATE}"
 
-gofmt -w rooomy_exporter.go
+gofmt -w process-exporter.go
 
-strip rooomy-exporter
+strip process-exporter
