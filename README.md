@@ -12,7 +12,7 @@ The exporter takes two parameters to select and de-select which processes to mon
 ### Arguments
 
 ```Usage of /process-exporter:
-  - log.format value
+  -log.format value
     	Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true" (default "logger:stderr")
   -log.level value
     	Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
@@ -46,7 +46,7 @@ The selection of the processes to return is rather simple.
 This way of selecting has some side effects:
 
 - the process of the exporter itself, has all arguments of process.watch in its command line
-- If you run 'curl http://localhost:8980/metrics | grep <process>' where process is in the process.watch list, you will get an extra record in the output for each metric, since 'grep <process>' actually matches.
+- If you run 'curl http://localhost:8980/metrics | grep \<process\>' where process is in the process.watch list, you will get an extra record in the output for each metric, since 'grep \<process\>' actually matches.
 
 It's up to the user to add enough arguments to process.nowatch to make sure only the required processes are being reporter. It's advised to at least give process-expoter as an argument to process.nowatch.
 
@@ -63,16 +63,16 @@ docker run --rm -d -v /:/rootfs -e HOST_PROC=/rootfs/proc -e HOST_SYS=/rootfs/sy
 
 #### Usage in Prometheus
 
-sum by (process) (irate(indivdual_process{instance="<server>:8980", metric=~"cpu_.*"}[1m]))
+sum by (process) (irate(indivdual_process{instance="\<server\>:8980", metric=~"cpu_.*"}[1m]))
 
-indivdual_process{instance="<server>:8980", metric=~"memory_.*", process="<process>"}
+indivdual_process{instance="\<server\>:8980", metric=~"memory_.*", process="\<process\>"}
 
 
 ### Environment variables
 
 The process-exporter itself is not using any environment variables.
 
-The library used to get the statistics of the processes (http://godoc.org/github.com/shirou/gopsutil/process) is using these environment variables:
+The library used to get the statistics of the processes (https://github.com/shirou/gopsutil/tree/master/process) is using these environment variables:
 - HOST_PROC
 - HOST_SYS
 - HOST_ETC
@@ -83,24 +83,24 @@ Setting these variables is necessary when running the process-exporter inside a 
 
 Overview of the metrics exporter by this exporter.
 
-indivdual_process{metric="cpu_guest",pid="915",process="<process>"}
-indivdual_process{metric="cpu_guestNice",pid="915",process="<process>"}
-indivdual_process{metric="cpu_idle",pid="915",process="<process>"}
-indivdual_process{metric="cpu_iowait",pid="915",process="<process>"}
-indivdual_process{metric="cpu_irq",pid="915",process="<process>"}
-indivdual_process{metric="cpu_nice",pid="915",process="<process>"}
-indivdual_process{metric="cpu_softirq",pid="915",process="<process>"}
-indivdual_process{metric="cpu_steal",pid="915",process="<process>"}
-indivdual_process{metric="cpu_stolen",pid="915",process="<process>"}
-indivdual_process{metric="cpu_system",pid="915",process="<process>"}
-indivdual_process{metric="cpu_user",pid="915",process="<process>"}
-indivdual_process{metric="memory_data",pid="915",process="<process>"}
-indivdual_process{metric="memory_dirty",pid="915",process="<process>"}
-indivdual_process{metric="memory_lib",pid="915",process="<process>"}
-indivdual_process{metric="memory_rss",pid="915",process="<process>"}
-indivdual_process{metric="memory_shared",pid="915",process="<process>"}
-indivdual_process{metric="memory_text",pid="915",process="<process>"}
-indivdual_process{metric="memory_vms",pid="915",process="<process>"}
+indivdual_process{metric="cpu_guest",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_guestNice",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_idle",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_iowait",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_irq",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_nice",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_softirq",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_steal",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_stolen",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_system",pid="915",process="\<process\>"}
+indivdual_process{metric="cpu_user",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_data",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_dirty",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_lib",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_rss",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_shared",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_text",pid="915",process="\<process\>"}
+indivdual_process{metric="memory_vms",pid="915",process="\<process\>"}
 
 Where process is the name as given in the arguments process.watch.
 
