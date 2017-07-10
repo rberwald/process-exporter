@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run --rm -p 8980:8980 rberwald/process-exporter /process-exporter -process.watch process-exporter,appelflap -log.format 'logger:stdout?json=true'
+docker run --rm -d -v /:/rootfs -e HOST_PROC=/rootfs/proc -e HOST_SYS=/rootfs/sys -e HOST_ETC=/rootfs/etc -p 8980:8980 --name=process-exporter rberwald/process-exporter /process-exporter -process.watch init -process.nowatch process-exporter -log.format "logger:stdout?json=true"

@@ -116,16 +116,6 @@ func (e *Exporter) scrape() {
 					e.processMetrics[proc_arg+strconv.Itoa(int(pid))].With(prometheus.Labels{"process": proc_arg, "pid": strconv.Itoa(int(pid)), "metric": "cpu_stolen"}).Set(cpuinfo.Stolen)
 				}
 			}
-
-			//if err == nil {
-			//	meminfo, err := proc.MemoryInfoEx()
-			//	fmt.Println(meminfo)
-			//	if err == nil {
-			//		fmt.Println("Memory info :")
-			//		fmt.Println("RSS: " + strconv.FormatUint(meminfo.RSS, 10))
-			//	}
-			//	fmt.Println(proc.Times())
-			//}
 		}
 	}
 
@@ -186,11 +176,21 @@ func main() {
 	log.Infoln("Starting process_exporter", version.Info())
 	log.Infoln("Build context", version.BuildContext())
 
-	log.Infoln("Watch:", *processExpr)
-	log.Infoln("Skip:", *processExprSkip)
-
-	to_watch = strings.Split(*processExpr, ",")
-	to_skip = strings.Split(*processExprSkip, ",")
+	// Don't split empty strings, it gives non-empty arrays?
+	if *processExpr != "" {
+		log.Infoln("Watch:", *processExpr)
+		to_watch = strings.Split(*processExpr, ",")
+	} else {
+		log.Infoln("Empty list to watch")
+		to_watch = []string{}
+	}
+	if *processExprSkip != "" {
+		log.Infoln("Skip:", *processExprSkip)
+		to_skip = strings.Split(*processExprSkip, ",")
+	} else {
+		log.Infoln("Empty list to skip")
+		to_skip = []string{}
+	}
 
 	metrics := map[string]*prometheus.GaugeVec{}
 	exporter, err := NewExporter(metrics)

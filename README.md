@@ -1,72 +1,106 @@
-# rooomy-exporter
+# process-exporter
 
-Software for blackbox monitoring of RoOomy instances with Prometheus.
+sum by (process) (irate(indivdual_process{instance="10.17.3.19:8980", metric=~"cpu_.*"}[1m]))
+
+indivdual_process{instance="10.17.3.19:8980", metric=~"memory_.*", process="deploy-test-04"}
+
+docker run --rm -d -v /:/rootfs -e HOST_PROC=/rootfs/proc -e HOST_SYS=/rootfs/sys -e HOST_ETC=/rootfs/etc -p 8980:8980 --name=process-exporter rberwald/process-exporter:0.1.0 /process-exporter -process.watch deploy-test-01,deploy-test-02,deploy-test-03,deploy-test-04,dev-ios,dev-cms,deploy-test-slave-eu-west-1,deploy-test-master-eu-west-1 -process.nowatch process-exporter -log.format "logger:stdout?json=true"
+
+Software for monitoring of individual processes on Linux with Prometheus.
 
 ### Description
 
-This repository is the home of the rooomy-exporter, a prometheus exporter to monitor RoOomy instances.
+This repository is the home of the process-exporter, a prometheus exporter to monitor individual processes on Linux.
 
-The exporter takes an URI as argument to point itself to the RoOomy instances. The URI needs to contain the username and password of the RoOomy instances.
-
-Every time the metrics are gathered, the exporter will contact the RoOomy instances, retrieve the AYT information, and use the AYT information to retrieve the Gallery, Real Estate Property, Model Product and User Profile feed. It will report the number of milliseconds of retrieval as metric.
+The exporter takes two parameters to select and de-select which processes to monitor.
 
 ### Arguments
 
-```Usage of /rooomy-exporter:
-  -log.format value
+```Usage of /process-exporter:
+
+g.format value
     	Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true" (default "logger:stderr")
   -log.level value
     	Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
-  -rooomy.scrape-uri string
-    	URI on which to scrape rooomy. (default "http://localhost/")
+  -process.nowatch string
+    	Processes to (no)watch
+	You should provided at least one process to watch.
+	The parameter process.watch should be a comma-seperated list of regular expressions of processes to watch
+	The parameter process.nowatch is a filter that removes processes from the list provided by process.watch
+  -process.watch string
+    	Processes to (no)watch
+	You should provided at least one process to watch.
+	The parameter process.watch should be a comma-seperated list of regular expressions of processes to watch
+	The parameter process.nowatch is a filter that removes processes from the list provided by process.watch
   -version
     	Print version information.
   -web.listen-address string
-    	Address to listen on for web interface and telemetry. (default ":8989")
+    	Address to listen on for web interface and telemetry. (default ":8980")
   -web.telemetry-path string
     	Path under which to expose metrics. (default "/metrics")
 ```
 
+### Usage
+
+The selection of the processes to return is rather simple.
+
+* Of every process found, the command line is taken.
+* The contents of the command line is matched with the arguments of process.watch. No match, go to next proccess.
+* Next, match the command line with the arguments of process.nowatch, Match, go to next process
+* If process should be watch, add a record for this process, labeling it with the argument from process.watch and the pid found.
+
+This way of selecting has some side effects:
+
+- the process of the exporter itself, has all arguments of process.watch in its command line
+- If you run 'curl http://localhost:8980/metrics | grep <process>' where process is in the process.watch list, you will get an extra record in the output for each metric, since 'grep <process>' actually matches.
+
+It's up to the user to add enough arguments to process.nowatch to make sure only the required processes are being reporter. It's advised to at least give process-expoter as an argument to process.nowatch.
+
+#### Running process-exporter inside docker
+
+If you want to run the process-exporter inside docker, you need to make sure the process-exporter has access to the process information of the host. This can be done by mounting the /proc filesystem to the docker container, and setting an environment variable to point the process-exporter to the right directory.
+
+Docker example:
+
+```
+docker run --rm -d -v /:/rootfs -e HOST_PROC=/rootfs/proc -e HOST_SYS=/rootfs/sys -e HOST_ETC=/rootfs/etc -p 8980:8980 --name=process-exporter rberwald/process-exporter /process-exporter -process.watch process1,process2 -process.nowatch process-exporter
+```
+
 ### Environment variables
 
-- ROOOMY_USER : the user to use to access the rooomy instance
-- ROOOMY_PASSWORD : the password to use to access the rooomy instance
-- ROOOMY_ENVIRONMENT : the environment of the rooomy instance (eg test)
-- ROOOMY_ROLE : the role of the rooomy instance (slave, master)
+The process-exporter itself is not using any environment variables.
 
-The variables ROOOMY_USER and ROOOMY_PASSWORD, if set to non-empty, overwrite credentials of the URI.
+The library used to get the statistics of the processes (http://godoc.org/github.com/shirou/gopsutil/process) is using these environment variables:
+- HOST_PROC
+- HOST_SYS
+- HOST_ETC
+
+Setting these variables is necessary when running the process-exporter inside a docker containers.
 
 ### Metrics
 
 Overview of the metrics exporter by this exporter.
 
-- rooomy_exporter_build_info : version, build and source code information
-- rooomy_lengthAYT : length of AYT response
-- rooomy_timeAYT : Time it took to get AYT information, in milliseconds
-- rooomy_timeGallery : Time it took to get Gallery Feed, in milliseconds
-- rooomy_timeModelProduct : Time it took to get Model Product Feed, in milliseconds
-- rooomy_timeRealEstate : Time it took to get Real Estate Property Feed, in milliseconds
-- rooomy_timeUserProfile : Time it took to get User Profile, in milliseconds
-- rooomy_countApiRequest : Number of API requests
-- rooomy_countHttp200 : Number of requests leading to HTTP 2xx response
-- rooomy_countHttp400 : Number of requests leading to HTTP 4xx response
-- rooomy_countHttp500 : Number of requests leading to HTTP 5xx response
-- rooomy_countSqlConnections : Number of available SQL connections
-- rooomy_countSqlConnectionsBusy : Number of busy SQL connections
-- rooomy_countTcpConnectionsAccepted : Number of accepted TCP connections
-- rooomy_countTcpConnectionsActive : Number of active TCP connections
-- rooomy_countTcpServerThreads : Number of TCP server threads
-- rooomy_countWorkerThreads : Number of available Worker threads
-- rooomy_countWorkerThreadsBusy : Number of busy Worker threads
-- rooomy_ApplicationInfo : Labelling info (application_name, application_version, application_environment, application_role)
+indivdual_process{metric="cpu_guest",pid="915",process="<process>"}
+indivdual_process{metric="cpu_guestNice",pid="915",process="<process>"}
+indivdual_process{metric="cpu_idle",pid="915",process="<process>"}
+indivdual_process{metric="cpu_iowait",pid="915",process="<process>"}
+indivdual_process{metric="cpu_irq",pid="915",process="<process>"}
+indivdual_process{metric="cpu_nice",pid="915",process="<process>"}
+indivdual_process{metric="cpu_softirq",pid="915",process="<process>"}
+indivdual_process{metric="cpu_steal",pid="915",process="<process>"}
+indivdual_process{metric="cpu_stolen",pid="915",process="<process>"}
+indivdual_process{metric="cpu_system",pid="915",process="<process>"}
+indivdual_process{metric="cpu_user",pid="915",process="<process>"}
+indivdual_process{metric="memory_data",pid="915",process="<process>"}
+indivdual_process{metric="memory_dirty",pid="915",process="<process>"}
+indivdual_process{metric="memory_lib",pid="915",process="<process>"}
+indivdual_process{metric="memory_rss",pid="915",process="<process>"}
+indivdual_process{metric="memory_shared",pid="915",process="<process>"}
+indivdual_process{metric="memory_text",pid="915",process="<process>"}
+indivdual_process{metric="memory_vms",pid="915",process="<process>"}
 
-### Redirection
-
-The redirection is useful if you are running in a container and want to connect to the rooomy instance running on the host.
-Normally you would need to connect to the public IP of the rooomy instance, sending you through the security groups. This means that the public IP of the host needs to be in the security group of of the host. In Terraform, this leads to a circular definition (sg -> inst -> sg). Plus it adds undesirable delay of going through several firewalls.
-
-By defining and extra host to the container (--add-host="rooomyhost.loftweb.nl:<private ip>"), and using the magical host (rooomyhost.loftweb.nl), you will always stay on the host itself.
-You will need determine the private IP of the host to inject in the start command of the container.
+Where process is the name as given in the arguments process.watch.
 
 ### Support Scripts
 There are some support scripts in the ```scripts/``` sub-directory. The scripts:
@@ -77,6 +111,7 @@ There are some support scripts in the ```scripts/``` sub-directory. The scripts:
 
 List of things to do in the future versions:
 
+- Make the selection of processes smarter
 - Solve all inline ToDo remarks
 - Add automated tests
 - Add automated build
