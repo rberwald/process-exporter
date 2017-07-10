@@ -1,10 +1,5 @@
 # process-exporter
 
-sum by (process) (irate(indivdual_process{instance="10.17.3.19:8980", metric=~"cpu_.*"}[1m]))
-
-indivdual_process{instance="10.17.3.19:8980", metric=~"memory_.*", process="deploy-test-04"}
-
-docker run --rm -d -v /:/rootfs -e HOST_PROC=/rootfs/proc -e HOST_SYS=/rootfs/sys -e HOST_ETC=/rootfs/etc -p 8980:8980 --name=process-exporter rberwald/process-exporter:0.1.0 /process-exporter -process.watch deploy-test-01,deploy-test-02,deploy-test-03,deploy-test-04,dev-ios,dev-cms,deploy-test-slave-eu-west-1,deploy-test-master-eu-west-1 -process.nowatch process-exporter -log.format "logger:stdout?json=true"
 
 Software for monitoring of individual processes on Linux with Prometheus.
 
@@ -17,8 +12,7 @@ The exporter takes two parameters to select and de-select which processes to mon
 ### Arguments
 
 ```Usage of /process-exporter:
-
-g.format value
+  - log.format value
     	Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true" (default "logger:stderr")
   -log.level value
     	Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
@@ -56,6 +50,7 @@ This way of selecting has some side effects:
 
 It's up to the user to add enough arguments to process.nowatch to make sure only the required processes are being reporter. It's advised to at least give process-expoter as an argument to process.nowatch.
 
+
 #### Running process-exporter inside docker
 
 If you want to run the process-exporter inside docker, you need to make sure the process-exporter has access to the process information of the host. This can be done by mounting the /proc filesystem to the docker container, and setting an environment variable to point the process-exporter to the right directory.
@@ -65,6 +60,13 @@ Docker example:
 ```
 docker run --rm -d -v /:/rootfs -e HOST_PROC=/rootfs/proc -e HOST_SYS=/rootfs/sys -e HOST_ETC=/rootfs/etc -p 8980:8980 --name=process-exporter rberwald/process-exporter /process-exporter -process.watch process1,process2 -process.nowatch process-exporter
 ```
+
+#### Usage in Prometheus
+
+sum by (process) (irate(indivdual_process{instance="<server>:8980", metric=~"cpu_.*"}[1m]))
+
+indivdual_process{instance="<server>:8980", metric=~"memory_.*", process="<process>"}
+
 
 ### Environment variables
 
